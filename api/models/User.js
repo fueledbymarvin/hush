@@ -6,12 +6,21 @@
 */
 
 module.exports = {
+  connection: 'hush',
+  adapter: 'mongo',
 
-    attributes: {
-	phone: {
-	    type: 'string',
-	    unique: true
-	}
-    }
+  schema: false,
+  attributes: {
+    phoneNumber: {
+      type: 'STRING',
+      required: true,
+      unique: true,
+      primaryKey: true
+    },
+    mailbox1: {
+      
+    },
+    unsentQueue: 'ARRAY',
+    credits: 'INTEGER'
+  }
 };
-
