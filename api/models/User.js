@@ -7,7 +7,7 @@
 
 module.exports = {
   connection: 'hush',
-  adapter: 'mongo',
+  adapter: 'someMongodbServer',
 
   schema: false,
   attributes: {
@@ -17,10 +17,23 @@ module.exports = {
       unique: true,
       primaryKey: true
     },
-    mailbox1: {
-      
+
+    receivedMessage1: {
+      model: 'Message'
     },
-    unsentQueue: 'ARRAY',
+
+    receivedMessage2: {
+      model: 'Message'
+    },
+
+    receivedMessage3: {
+      model: 'Message'
+    },
+
+    unsentQueue: {
+      collection: 'Message',
+      via: 'to'
+    },
     credits: 'INTEGER'
   }
 };
