@@ -5,8 +5,6 @@
  * @help        :: See http://links.sailsjs.org/docs/controllers
  */
 
-var twilio = require('/api/services/twilio.js');
-
 module.exports = {
     messageReceived: function(req, res) {
         var sender = req.body('From'),
@@ -24,8 +22,9 @@ module.exports = {
             if (twilio.isMainNumber(twilioReceivingNumber)){
                 // This creates a message thread
                 var regex = /^@[0-9]{10} /;
-                if (var receiver = regex.exec(body)) {
-                    user.addSendCredit();
+                var receiver;
+                if (receiver = regex.exec(body)) {
+                    user.credits++;
                     user.save(function (err,user) {
                         var content = body.replace(regex, '');
                         User.findOrCreate({phone: receiver},{phone: receiver}, function(err, recipients) {

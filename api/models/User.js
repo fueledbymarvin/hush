@@ -72,9 +72,9 @@ module.exports = {
 	    checkRelease();
 	},
 
-	closeThread: function(fromPhone) {
-	    this.threads.findOne({fromPhone: opts.fromPhone}, function(err, thread) {
-		thread.fromPhone = "";
+	closeThread: function(from) {
+	    this.threads.findOne({from: from.id}, function(err, thread) {
+		thread.from = null;
 		thread.save(function(){});
 	    });
 	}
@@ -89,14 +89,16 @@ module.exports = {
 			cb(err);
 		    //twilio.RECEIVING_NUMBERS.forEach(function(number) {
 		    ["123", "245"].forEach(function(number) {
-			Message.create({to: user.id, messagingAgent: number}, function(err, message) {
+			Message.create({to: user.phoneNumber, messagingAgent: number}, function(err, message) {
 			    if (err)
 				cb(err);
-			    user.unsentQueue.add(message.id);
-			    user.save(function(err, u){console.log(u);});
+			    user.unsentQueue.add(message);
+			    user.save(function(err, u){console.log(err);});
 			});
 		    });
 		});
+	    else
+		cb(null, user);
 	});
     }
 };
