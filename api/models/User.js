@@ -36,17 +36,18 @@ module.exports = {
 	    var user = this;
 	    message.save(function(err, m){
 		if (err) {
-                    console.log("ERROR");
-                    console.log(err);
-                    return;
+            console.log("ERROR");
+            console.log(err);
+            return;
 		}
 		user.unsentQueue.add(m);
 		user.save(function(err, x) {
-                    if (err) {
-			console.log(err);
-			return;
-                    }
-                    return;
+            console.log(err);
+            if (err) {
+                console.log(err);
+                return;
+            }
+            return;
 		});
 		user.checkRelease();
 	    });
@@ -121,20 +122,31 @@ module.exports = {
                         console.log("ERROR CREATING USER");
                         return cb(err);
                     }
+                    var i = 0;
                     twilio.RECEIVING_NUMBERS.forEach(function(number) {
                         Message.create({to: user.id, messagingAgent: number}, function(err, message) {
                             if (err) {
                                 return cb(err);
                             }
                             user.threads.add(message);
-                            user.save(function(err,x){
-                                    console.log("ERROR");
-                                    console.log(err);
-                                    return;
-                                }
-                            });
+                            i++;
                         });
                     });
+                    function ping() {
+                        setTimeout(function(){
+                            if (i==3) {
+                                console.log("SAVE");
+                                user.save(function(err,x){
+                                        console.log("ERROR");
+                                        console.log(err);
+                                        return;
+                                });
+                            } else {
+                                ping();
+                            }
+                        },1000);
+                    }
+                    ping();
                     return cb(null,user);
                 });
             else
