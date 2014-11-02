@@ -27,6 +27,7 @@ module.exports = {
                 var regex = /^[0-9]{10}\ /;
                 var receiver = regex.exec(body)[0];
                 if (receiver) {
+                    receiver = /^[0-9]{10}/.exec(body)[0];
                     var message = body.replace(regex, '');
                     User.findOrCreateByPhone({phoneNumber: receiver}, function(err, recipients) {
                         if (err) {
@@ -62,8 +63,8 @@ module.exports = {
                     });
                 }
             } else if(twilio.RECEIVING_NUMBERS.indexOf(twilioReceivingNumber) != -1) {
-		user.getThread({throughPhone: twilioReceivingNumber}, function(err, thread) {
-		    if (err) {
+                user.getThread({throughPhone: twilioReceivingNumber}, function(err, thread) {
+                    if (err) {
                         console.log(err);
                         res.send(err);
                         return twilio.sendError({
@@ -71,27 +72,27 @@ module.exports = {
                             to: sender,
                             msg: "Sorry, something went wrong"
                         });
-		    }
-		    User.findOne(thread.from).populate('threads').exec(function(err, receiver) {
-			if (err) {
+                    }
+                    User.findOne(thread.from).exec(function(err, receiver) {
+                        if (err) {
                             console.log(err);
                             res.send(err);
                             return twilio.sendError({
-				from: twilioReceivingNumber,
-				to: sender,
-				msg: "Sorry, something went wrong"
+                                from: twilioReceivingNumber,
+                                to: sender,
+                                msg: "Sorry, something went wrong"
                             });
-			}
-			twilio.send({
-			    from: twilioReceivingNumber,
-			    to: receiver.phoneNumber,
-			    msg: body
-			});
-			user.closeThread(thread);
-		    });
-		});
+                        }
+                        twilio.send({
+                            from: twilioReceivingNumber,
+                            to: receiver.phoneNumber,
+                            msg: body
+                        });
+                        user.closeThread(thread);
+                    });
+                });
             }
-	});
+        });
     }
 };
 
