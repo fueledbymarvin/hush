@@ -29,8 +29,17 @@ module.exports = {
 	credits: 'integer',
 
 	addToQueue: function(message) {
-	    this.queue.add(message);
-	    this.checkRelease();
+	    message.content = "change";
+	    message.to = this;
+	    console.log(message);
+	    var user = this;
+	    message.save(function(err, m){
+		console.log(err);
+		console.log(m);
+		user.unsentQueue.add(m);
+		console.log(user);
+		//this.checkRelease();
+	    });
 	},
 
 	checkRelease: function() {
@@ -44,7 +53,7 @@ module.exports = {
 		    return;
 		this.unsentQueue.find({sort: 'createdAt DESC'}, function(err, sorted) {
 		    for (var i = 0;
-			 i < threads.length && this.credits >= 2 && this.queue.length > 0;
+			 i < threads.length && this.credits >= 2 && this.unsentQueue.length > 0;
 			 i++) {
 			credits -= 2;
 			var message = sorted.pop();
@@ -71,7 +80,6 @@ module.exports = {
 	},
 
 	closeThread: function(from) {
-	    console.log(this.threads);
 	    this.threads.findOne({from: from.id}, function(err, thread) {
 		thread.from = null;
 		thread.save(function(){});
@@ -87,7 +95,7 @@ module.exports = {
 		    if (err)
 			cb(err);
 		    twilio.RECEIVING_NUMBERS.forEach(function(number) {
-			Message.create({owner: user.id, messagingAgent: number}, function(err, message) {
+			Message.create({to: user.id, messagingAgent: number}, function(err, message) {
 			    if (err)
 				cb(err);
 			    user.threads.add(message);
