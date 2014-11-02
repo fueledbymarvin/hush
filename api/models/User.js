@@ -36,11 +36,19 @@ module.exports = {
 	    var user = this;
 	    message.save(function(err, m){
             if (err) {
+                console.log("ERROR");
                 console.log(err);
                 return;
             }
             user.unsentQueue.add(m);
-            user.save(function(err, x) {});
+            user.save(function(err, x) {
+                if (err) {
+                    console.log(err);
+                    res.send(err);
+                    return;
+                }
+                return;
+            });
             user.checkRelease();
 	    });
 	},
@@ -99,25 +107,38 @@ module.exports = {
 	    });
 	}
     },
+
     findOrCreateByPhone: function(opts, cb) {
         User.findOne({phoneNumber: opts.phoneNumber}).populate('threads').populate('unsentQueue').exec(function(err, user) {
-            if (err)
-                cb(err);
+            if (err) {
+                console.log("ERROR FINDING USER");
+                return cb(err);
+            }
             if (!user)
                 User.create({phoneNumber: opts.phoneNumber}, function(err, user) {
-                    if (err)
-                        cb(err);
+                    if (err) {
+                        console.log("ERROR CREATING USER");
+                        return cb(err);
+                    }
                     twilio.RECEIVING_NUMBERS.forEach(function(number) {
                         Message.create({to: user.id, messagingAgent: number}, function(err, message) {
-                            if (err)
-                                cb(err);
+                            if (err) {
+                                return cb(err);
+                            }
                             user.threads.add(message);
-                            user.save(cb);
+                            user.save(function(err,x){
+                                if (err) {
+                                    console.log("ERROR");
+                                    console.log(err);
+                                    return;
+                                }
+                            });
                         });
                     });
+                    return cb(null,user);
                 });
             else
-                cb(null, user);
+                return cb(null, user);
         });
     }
 };
