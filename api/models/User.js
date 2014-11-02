@@ -32,7 +32,6 @@ module.exports = {
     },
 
 	addToQueue: function(message) {
-	    message.content = "change";
 	    message.to = this.id;
 	    var user = this;
 	    message.save(function(err, m){
@@ -96,24 +95,24 @@ module.exports = {
 	}
     },
     findOrCreateByPhone: function(opts, cb) {
-	User.findOne({phoneNumber: opts.phoneNumber}, function(err, user) {
-	    if (err)
-		cb(err);
-	    if (!user)
-		User.create({phoneNumber: opts.phoneNumber}, function(err, user) {
-		    if (err)
-			cb(err);
-		    twilio.RECEIVING_NUMBERS.forEach(function(number) {
-			Message.create({to: user.id, messagingAgent: number}, function(err, message) {
-			    if (err)
-				cb(err);
-			    user.threads.add(message);
-			    user.save(cb);
-			});
-		    });
-		});
-	    else
-		cb(null, user);
-	});
+        User.findOne({phoneNumber: opts.phoneNumber}).populate('threads').populate('unsentQueue').exec(function(err, user) {
+            if (err)
+                cb(err);
+            if (!user)
+                User.create({phoneNumber: opts.phoneNumber}, function(err, user) {
+                    if (err)
+                        cb(err);
+                    twilio.RECEIVING_NUMBERS.forEach(function(number) {
+                        Message.create({to: user.id, messagingAgent: number}, function(err, message) {
+                            if (err)
+                                cb(err);
+                            user.threads.add(message);
+                            user.save(cb);
+                        });
+                    });
+                });
+            else
+                cb(null, user);
+        });
     }
 };

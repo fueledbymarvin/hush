@@ -13,7 +13,7 @@ module.exports = {
         console.log(sender, twilioReceivingNumber, body);
         
         // Find User who sent msg 
-        User.findOrCreate({phoneNumber: sender}, {phoneNumber: sender}, function (err, users) {
+        User.findOrCreateByPhone({phoneNumber: sender}, function (err, users) {
             if (err) {
                 res.send(err);
             } else {
@@ -27,8 +27,8 @@ module.exports = {
                 var receiver = regex.exec(body);
                 console.log(receiver);
                 if (receiver[0]) {
-                    var content = body.replace(regex, '');
-                    User.findOrCreate({phoneNumber: receiver},{phoneNumber: receiver}).populate('threads').exec(function(err, recipients) {
+                    var message = body.replace(regex, '');
+                    User.findOrCreateByPhone({phoneNumber: receiver}, function(err, recipients) {
                         console.log("HELLO");
                         if (err) {
                             console.log(err);
@@ -42,9 +42,15 @@ module.exports = {
                             recipient = recipients.isArray ? recipients[0] : recipients;
                             console.log(recipient);
                         }
-                        recipient.newMessage({
+                        console.log("HELLO");
+                        Message.create({
                             from: user,
-                            msg: content 
+                            content: message,
+                            to: recipient
+                        }, function(err,m){
+                            recipient.addToQueue(m);
+                            user.addSendCredit();
+                            res.send("Probably worked");
                         });
                     });
                 } else {
