@@ -76,12 +76,17 @@ module.exports = {
 	    });
 	},
 
-	getThreadPhone: function (opts, cb) {
-	    this.threads.findOne({throughPhone: opts.throughPhone}, function(err, message) {
-		if (err)
-		    cb(err);
-		cb(null, message.fromPhone);
+	getThread: function (opts, cb) {
+	    this.threads.forEach(function(thread) {
+		if (thread.messagingAgent == opts.throughPhone) {
+		    cb(null, thread);
+		}
 	    });
+// findOne({throughPhone: opts.throughPhone}).populate('from').exec(function(err, message) {
+// 		if (err)
+// 		    cb(err);
+// 		cb(null, message);
+// 	    });
 	},
 
 	addSendCredit: function() {
@@ -95,10 +100,11 @@ module.exports = {
         });
 	},
 
-	closeThread: function(from) {
-	    this.threads.findOne({from: from.id}, function(err, thread) {
-		thread.from = null;
-		thread.save(function(){});
+	closeThread: function(thread) {
+	    thread.from = null;
+	    var user = this;
+	    thread.save(function(err, t) {
+		user.checkRelease();
 	    });
 	}
     },

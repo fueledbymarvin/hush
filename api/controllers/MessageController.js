@@ -62,10 +62,36 @@ module.exports = {
                     });
                 }
             } else if(twilio.RECEIVING_NUMBERS.indexOf(twilioReceivingNumber) != -1) {
-                // This is a response to a message thread
+		user.getThread({throughPhone: twilioReceivingNumber}, function(err, thread) {
+		    if (err) {
+                        console.log(err);
+                        res.send(err);
+                        return twilio.sendError({
+                            from: twilioReceivingNumber,
+                            to: sender,
+                            msg: "Sorry, something went wrong"
+                        });
+		    }
+		    User.findOne(thread.from).populate('threads').exec(function(err, receiver) {
+			if (err) {
+                            console.log(err);
+                            res.send(err);
+                            return twilio.sendError({
+				from: twilioReceivingNumber,
+				to: sender,
+				msg: "Sorry, something went wrong"
+                            });
+			}
+			twilio.send({
+			    from: twilioReceivingNumber,
+			    to: receiver.phoneNumber,
+			    msg: body
+			});
+			user.closeThread(thread);
+		    });
+		});
             }
-        });
-
+	});
     }
 };
 
