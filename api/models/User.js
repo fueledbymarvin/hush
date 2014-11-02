@@ -20,12 +20,10 @@ module.exports = {
 
 	threads: {
 	    collection: 'Message',
-	    via: 'to'
 	},
 
 	unsentQueue: {
 	    collection: 'Message',
-	    via: 'to'
 	},
 
 	credits: 'integer',
@@ -73,6 +71,7 @@ module.exports = {
 	},
 
 	closeThread: function(from) {
+	    console.log(this.threads);
 	    this.threads.findOne({from: from.id}, function(err, thread) {
 		thread.from = null;
 		thread.save(function(){});
@@ -87,13 +86,12 @@ module.exports = {
 		User.create({phoneNumber: opts.phoneNumber}, function(err, user) {
 		    if (err)
 			cb(err);
-		    //twilio.RECEIVING_NUMBERS.forEach(function(number) {
-		    ["123", "245"].forEach(function(number) {
-			Message.create({to: user.phoneNumber, messagingAgent: number}, function(err, message) {
+		    twilio.RECEIVING_NUMBERS.forEach(function(number) {
+			Message.create({owner: user.id, messagingAgent: number}, function(err, message) {
 			    if (err)
 				cb(err);
-			    user.unsentQueue.add(message);
-			    user.save(function(err, u){console.log(err);});
+			    user.threads.add(message);
+			    user.save(cb);
 			});
 		    });
 		});

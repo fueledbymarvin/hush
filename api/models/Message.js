@@ -19,7 +19,6 @@ module.exports = {
 
     to : {
       model: 'User',
-      required: true
     },
 
     messagingAgent : {
