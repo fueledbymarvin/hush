@@ -27,7 +27,7 @@ module.exports = {
                     user.credits++;
                     user.save(function (err,user) {
                         var content = body.replace(regex, '');
-                        User.findOrCreate({phone: receiver},{phone: receiver}, function(err, recipients) {
+                        User.findOrCreate({phone: receiver},{phone: receiver}).populate('threads').exec(function(err, recipients) {
                             if (err) {
                                 return twilio.sendError({
                                     from: twilio.MAIN_NUMBER,
