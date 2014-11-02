@@ -69,16 +69,15 @@ module.exports = {
 	},
 
 	getThread: function (opts, cb) {
+	    var found = false;
 	    this.threads.forEach(function(thread) {
 		if (thread.messagingAgent == opts.throughPhone) {
 		    cb(null, thread);
+		    found = true;
 		}
 	    });
-// findOne({throughPhone: opts.throughPhone}).populate('from').exec(function(err, message) {
-// 		if (err)
-// 		    cb(err);
-// 		cb(null, message);
-// 	    });
+	    if (!found)
+		cb(new Error("not valid thread"));
 	},
 
 	addSendCredit: function() {
