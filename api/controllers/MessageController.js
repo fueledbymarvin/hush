@@ -25,7 +25,7 @@ module.exports = {
                 // This creates a message thread
                 var regex = /^@[0-9]{10} /;
                 if (var receiver = regex.exec(body)) {
-                    user.credits++;
+                    user.addSendCredit();
                     user.save(function (err,user) {
                         var content = body.replace(regex, '');
                         User.findOrCreate({phone: receiver},{phone: receiver}, function(err, recipients) {
