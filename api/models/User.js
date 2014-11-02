@@ -40,16 +40,32 @@ module.exports = {
             console.log(err);
             return;
 		}
+        var size = user.unsentQueue.length;
+        console.log("SIZE?");
+        //console.log(size);
 		user.unsentQueue.add(m);
-		user.save(function(err, x) {
-            console.log(err);
-            if (err) {
-                console.log(err);
-                return;
-            }
-            return;
-		});
-		user.checkRelease();
+        console.log(size);
+        function ping() {
+            setTimeout(function(){
+                if (user.unsentQueue.length > size) {
+                    user.save(function(err, x) {
+                        console.log(err);
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        console.log("SAVED");
+                        user.checkRelease();
+                        return;
+                    });
+                } else {
+                    console.log(user.unsentQueue.length);
+                    ping();
+                }
+            },1000);
+        }
+        ping();
+
 	    });
 	},
 
@@ -133,21 +149,35 @@ module.exports = {
                         });
                     });
                     function ping() {
+                        console.log("PING");
                         setTimeout(function(){
-                            if (i==3) {
-                                console.log("SAVE");
-                                user.save(function(err,x){
-                                        console.log("ERROR");
-                                        console.log(err);
-                                        return;
-                                });
-                            } else {
+                            if (user.threads.size < 3) {
+                                console.log(user.threads.size);
                                 ping();
+                            } else {
+                                console.log("SAVE");
+                                user.save(function(err, u) {
+                                    cb(null, u);
+                                });
                             }
+                            /**
+                            user.threads.count().where({
+                            }).exec(function(err,num){
+                                if (err) {
+                                    console.log(err);
+                                    return;
+                                }
+                                if (num == 3) {
+                                    user.save(function(err,u){
+                                        cb(null, u);
+                                    });
+                                } else {
+                                    console.log(num);
+                                }
+                            });**/
                         },1000);
                     }
                     ping();
-                    return cb(null,user);
                 });
             else
                 return cb(null, user);
