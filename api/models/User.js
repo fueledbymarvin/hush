@@ -26,43 +26,46 @@ module.exports = {
 	    collection: 'Message',
 	},
 
-	credits: 'integer',
+	credits: {
+        type: 'integer',
+        defaultsTo: 0
+    },
 
 	addToQueue: function(message) {
 	    message.content = "change";
-	    message.to = this;
-	    console.log(message);
+	    message.to = this.id;
 	    var user = this;
 	    message.save(function(err, m){
-		console.log(err);
-		console.log(m);
-		user.unsentQueue.add(m);
-		console.log(user);
-		//this.checkRelease();
+            if (err) {
+                console.log(err);
+                return;
+            }
+            user.unsentQueue.add(m);
+            user.save(function(err, x) {});
+            user.checkRelease();
 	    });
 	},
 
 	checkRelease: function() {
-	    this.threads.find({from: null}, function(err, threads) {
-		// no open threads
-		if (threads.length == 0 ||
-		    // not enough credits
-		    this.credits < 2 ||
+		if (this.credits < 2 ||
 		    // empty queue
 		    this.unsentQueue.length == 0)
 		    return;
-		this.unsentQueue.find({sort: 'createdAt DESC'}, function(err, sorted) {
-		    for (var i = 0;
-			 i < threads.length && this.credits >= 2 && this.unsentQueue.length > 0;
-			 i++) {
-			credits -= 2;
-			var message = sorted.pop();
-			threads[i].from = message.from;
-			threads[i].content = message.content;
-			message.destroy();
-			this.save(function(){});
-		    }
-		});
+        var user = this;
+        this.threads.forEach(function(thread) {
+            if (thread.from != null) {
+                return;
+            }
+            // no open threads
+            if (user.credits >= 2 && user.unsentQueue.length > 0) {
+                user.credits -= 2;
+                var message = user.unsentQueue.shift();
+                thread.from = message.from;
+                thread.content = message.content;
+                console.log(thread);
+                thread.save(function(err,t){console.log(t);});
+                message.destroy();
+            }
 	    });
 	},
 
@@ -76,7 +79,13 @@ module.exports = {
 
 	addSendCredit: function() {
 	    this.credits++;
-	    checkRelease();
+        this.save(function(err,u){
+            if (err) {
+                console.log(err);
+                return;
+            }
+            u.checkRelease();
+        });
 	},
 
 	closeThread: function(from) {
