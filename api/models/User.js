@@ -6,34 +6,51 @@
 */
 
 module.exports = {
+    connection: 'hush',
+    adapter: 'someMongodbServer',
+    schema: false,
+
     attributes: {
-	phone: {
+	phoneNumber: {
 	    type: 'string',
-	    unique: true
+	    required: true,
+	    unique: true,
+	    primaryKey: true
 	},
-	credits: {
-	    type: 'integer'
+
+	threads: {
+	    collection: 'Message',
+	    via: 'to'
 	},
+
+	unsentQueue: {
+	    collection: 'Message',
+	    via: 'to'
+	},
+
+	credits: 'integer',
+
 	addToQueue: function(message) {
 	    this.queue.add(message);
 	    this.checkRelease();
 	},
+
 	checkRelease: function() {
-	    this.threads.find({fromPhone: ""}, function(err, threads) {
+	    this.threads.find({from: null}, function(err, threads) {
 		// no open threads
 		if (threads.length == 0 ||
 		    // not enough credits
 		    this.credits < 2 ||
 		    // empty queue
-		    this.queue.length == 0)
+		    this.unsentQueue.length == 0)
 		    return;
-		this.queue.find({sort: 'createdAt DESC'}, function(err, sorted) {
+		this.unsentQueue.find({sort: 'createdAt DESC'}, function(err, sorted) {
 		    for (var i = 0;
 			 i < threads.length && this.credits >= 2 && this.queue.length > 0;
 			 i++) {
 			credits -= 2;
 			var message = sorted.pop();
-			threads[i].fromPhone = message.fromPhone;
+			threads[i].from = message.from;
 			threads[i].content = message.content;
 			message.destroy();
 			this.save(function(){});
@@ -41,6 +58,7 @@ module.exports = {
 		});
 	    });
 	},
+
 	getThreadPhone: function (opts, cb) {
 	    this.threads.findOne({throughPhone: opts.throughPhone}, function(err, message) {
 		if (err)
@@ -48,16 +66,37 @@ module.exports = {
 		cb(null, message.fromPhone);
 	    });
 	},
+
 	addSendCredit: function() {
 	    this.credits++;
 	    checkRelease();
 	},
+
 	closeThread: function(fromPhone) {
 	    this.threads.findOne({fromPhone: opts.fromPhone}, function(err, thread) {
 		thread.fromPhone = "";
 		thread.save(function(){});
 	    });
 	}
+    },
+    findOrCreateByPhone: function(opts, cb) {
+	User.findOne({phoneNumber: opts.phoneNumber}, function(err, user) {
+	    if (err)
+		cb(err);
+	    if (!user)
+		User.create({phoneNumber: opts.phoneNumber}, function(err, user) {
+		    if (err)
+			cb(err);
+		    //twilio.RECEIVING_NUMBERS.forEach(function(number) {
+		    ["123", "245"].forEach(function(number) {
+			Message.create({to: user.id, messagingAgent: number}, function(err, message) {
+			    if (err)
+				cb(err);
+			    user.unsentQueue.add(message.id);
+			    user.save(function(err, u){console.log(u);});
+			});
+		    });
+		});
+	});
     }
 };
-
