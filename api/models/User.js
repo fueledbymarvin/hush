@@ -35,42 +35,43 @@ module.exports = {
 	    message.to = this.id;
 	    var user = this;
 	    message.save(function(err, m){
-            if (err) {
-                console.log("ERROR");
-                console.log(err);
-                return;
-            }
-            user.unsentQueue.add(m);
-            user.save(function(err, x) {
-                if (err) {
+		if (err) {
+                    console.log("ERROR");
                     console.log(err);
-                    res.send(err);
                     return;
-                }
-                return;
-            });
-            user.checkRelease();
+		}
+		user.unsentQueue.add(m);
+		user.save(function(err, x) {
+                    if (err) {
+			console.log(err);
+			return;
+                    }
+                    return;
+		});
+		user.checkRelease();
 	    });
 	},
 
 	checkRelease: function() {
-		if (this.credits < 2 ||
-		    // empty queue
-		    this.unsentQueue.length == 0)
-		    return;
+	    if (this.credits < 2 ||
+		// empty queue
+		this.unsentQueue.length == 0)
+		return;
         var user = this;
         this.threads.forEach(function(thread) {
             if (thread.from != null) {
+		console.log("Not null.");
                 return;
             }
             // no open threads
             if (user.credits >= 2 && user.unsentQueue.length > 0) {
+		console.log("Moving shit.");
                 user.credits -= 2;
                 var message = user.unsentQueue.shift();
                 thread.from = message.from;
                 thread.content = message.content;
-                console.log(thread);
-                thread.save(function(err,t){console.log(t);});
+                thread.save(function(err,t){});
+                user.save(function(err,u){});
                 message.destroy();
             }
 	    });
@@ -127,7 +128,6 @@ module.exports = {
                             }
                             user.threads.add(message);
                             user.save(function(err,x){
-                                if (err) {
                                     console.log("ERROR");
                                     console.log(err);
                                     return;
